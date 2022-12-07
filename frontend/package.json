@@ -1,0 +1,39 @@
+{
+  "name": "cledara-links",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "npm run build && sls deploy --stage prod",
+    "delete": "sls remove --stage prod"
+  },
+  "dependencies": {
+    "@fontsource/plus-jakarta-sans": "4.5.10",
+    "qrcode.react": "3.1.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-router-dom": "6.4.4",
+    "react-zxing": "1.0.5"
+  },
+  "devDependencies": {
+    "@types/react": "18.0.24",
+    "@types/react-dom": "18.0.8",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@vitejs/plugin-react": "2.2.0",
+    "eslint": "8.29.0",
+    "eslint-config-standard-with-typescript": "23.0.0",
+    "eslint-plugin-html": "7.1.0",
+    "eslint-plugin-import": "2.26.0",
+    "eslint-plugin-n": "15.6.0",
+    "eslint-plugin-promise": "6.1.1",
+    "eslint-plugin-react": "7.31.11",
+    "serverless": "3.25.1",
+    "serverless-s3-sync": "3.1.0",
+    "typescript": "4.9.3",
+    "vite": "3.2.3"
+  }
+}

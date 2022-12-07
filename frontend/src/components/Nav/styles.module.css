@@ -1,0 +1,29 @@
+.nav {
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 4rem;
+  width: 100%;
+  padding: 0.5rem;
+  margin: 0 0 0.8rem 0;
+  box-sizing: border-box;
+  box-shadow: 1px 1px 3px 0 rgb(0 0 0 / 64%);
+}
+
+.logo {
+  height: 50%;
+  width: auto;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+@media only screen and (min-width: 600px) {
+  .nav {
+    padding: 0rem 1.2rem;
+    margin: 0 0 1.2rem 0;
+  }
+}

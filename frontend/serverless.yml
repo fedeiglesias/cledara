@@ -1,0 +1,106 @@
+  service: cledara-links-client
+  frameworkVersion: '3'
+  useDotenv: true
+
+  plugins:
+    - serverless-s3-sync
+
+  provider:
+    name: aws
+    runtime: nodejs14.x
+
+  package:
+    individually: true
+
+  custom:
+    s3Bucket: cledara-links-client
+
+    domain:
+      subdomain: cledara.fedex.dev
+      certificateArn: arn:aws:acm:us-east-1:989257975727:certificate/dc7835de-5d24-4ef1-a42a-e50a5857735d
+
+    s3Sync:
+      - bucketName: ${self:custom.s3Bucket}
+        localDir: dist
+        deleteRemoved: true
+        params:
+          - index.html:
+              CacheControl: "no-store, no-cache"
+          - index.js:
+              CacheControl: "no-store, no-cache"
+
+  resources:
+    Resources:
+      WebsiteBucket:
+        Type: AWS::S3::Bucket
+        Properties:
+          BucketName: ${self:custom.s3Bucket}
+          AccessControl: PublicRead
+          WebsiteConfiguration:
+            IndexDocument: index.html
+            ErrorDocument: index.html
+      WebsiteBucketPolicy:
+        Type: AWS::S3::BucketPolicy
+        DependsOn:
+          - WebsiteBucket
+        Properties:
+          Bucket:
+            Ref: WebsiteBucket
+          PolicyDocument:
+            Statement:
+              - Sid: PublicReadGetObject
+                Effect: Allow
+                Principal: "*"
+                Action:
+                - s3:GetObject
+                Resource: arn:aws:s3:::${self:custom.s3Bucket}/*
+      S3OriginAccessIdentity:
+        Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+        Properties:
+          CloudFrontOriginAccessIdentityConfig:
+            Comment: Serverless managed web app S3 bucket origin-access-identity
+      CFDistribution:
+        Type: AWS::CloudFront::Distribution
+        Properties:
+          DistributionConfig:
+            Enabled: true
+            PriceClass: PriceClass_100
+            HttpVersion: http2
+            DefaultRootObject: index.html
+            Origins:
+              - Id: WebApp
+                DomainName:
+                  Fn::GetAtt: [WebsiteBucket, DomainName]
+                S3OriginConfig:
+                  OriginAccessIdentity:
+                    Fn::Join:
+                      - ""
+                      - - origin-access-identity/cloudfront/
+                        - Ref: S3OriginAccessIdentity
+            CustomErrorResponses:
+              - ErrorCode: 404
+                ResponseCode: 200
+                ResponsePagePath: /index.html
+            DefaultCacheBehavior:
+              AllowedMethods:
+                - GET
+                - HEAD
+                - OPTIONS
+              TargetOriginId: WebApp
+              ForwardedValues:
+                QueryString: false
+                Cookies:
+                  Forward: none
+              ViewerProtocolPolicy: redirect-to-https
+            Logging:
+              IncludeCookies: false
+              Bucket: ""
+              Prefix: ""
+            ViewerCertificate:
+              MinimumProtocolVersion: TLSv1.1_2016
+              SslSupportMethod: sni-only
+              AcmCertificateArn: ${self:custom.domain.certificateArn}
+    Outputs:
+      CloudfrontDomainName:
+        Value:
+          'Fn::GetAtt': [ CFDistribution, DomainName ]

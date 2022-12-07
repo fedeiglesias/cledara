@@ -1,0 +1,16 @@
+# package directories
+node_modules
+
+# Serverless directories
+.serverless
+
+# esbuild directories
+.esbuild
+
+# DynonamoDB local database
+.dynamodb
+
+# dotenv
+.env
+.env.dev
+.env.prod

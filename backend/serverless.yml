@@ -1,0 +1,108 @@
+  service: cledara-links
+  frameworkVersion: '3'
+  useDotenv: true
+
+  plugins:
+    - 'serverless-esbuild'
+    - 'serverless-dynamodb-local'
+    - 'serverless-offline'
+
+  provider:
+    name: aws
+    runtime: nodejs16.x
+    apiGateway:
+      minimumCompressionSize: 1024
+      shouldStartNameWithService: true
+    environment:
+      JWT_SECRET: ${env:JWT_SECRET}
+      DYNAMODB_PORT: ${env:DYNAMODB_PORT}
+      DYNAMODB_LINKS_TABLE_NAME: ${env:DYNAMODB_LINKS_TABLE_NAME}
+      AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+      NODE_OPTIONS: "--enable-source-maps --stack-trace-limit=1000"
+
+    iam:
+      role:
+        statements:
+          - Effect: "Allow"
+            Action:
+              - "dynamodb:DescribeTable"
+              - "dynamodb:Query"
+              - "dynamodb:Scan"
+              - "dynamodb:GetItem"
+              - "dynamodb:PutItem"
+              - "dynamodb:UpdateItem"
+              - "dynamodb:DeleteItem"
+            Resource: "arn:aws:dynamodb:${aws:region}:*:table/${env:DYNAMODB_LINKS_TABLE_NAME}"
+
+  package:
+    individually: true
+
+  custom:
+    esbuild:
+      bundle: true
+      minify: false
+      sourcemap: true
+      exclude: 'aws-sdk'
+      target: 'node14'
+      define:
+        'require.resolve': 'undefined'
+      platform: 'node'
+      concurrency: 10
+    dynamodb:
+      start:
+        port: ${env:DYNAMODB_PORT}
+        inMemory: true
+        migrate: true
+      stages: "local"
+  
+  functions:
+    getToken:
+      handler: src/functions/token/handler.getToken
+      memorySize: 128
+      description: Get JWT Token
+      events:
+        - http:
+            path: token/
+            method: get
+            cors: true
+
+    getAllLinks:
+      handler: src/functions/link/handler.getAllLinks
+      memorySize: 128
+      description: Get All Links
+      events:
+        - http:
+            path: link/
+            method: get
+            cors: true
+
+    createLink:
+      handler: src/functions/link/handler.createLink
+      memorySize: 128
+      description: Create new Link
+      events:
+        - http:
+            path: link/
+            method: post
+            cors: true
+
+    authorizerFunc:
+      handler: src/functions/token/handler.authorizer
+      description: Check JWT validity
+      memorySize: 128
+
+  resources:
+    Resources:
+      LinksTable:
+        Type: "AWS::DynamoDB::Table"
+        Properties:
+          TableName: ${env:DYNAMODB_LINKS_TABLE_NAME}
+          AttributeDefinitions:
+            - AttributeName: "id"
+              AttributeType: "S"
+          KeySchema:
+            - AttributeName: "id"
+              KeyType: "HASH"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
